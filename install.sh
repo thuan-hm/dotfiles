@@ -18,7 +18,7 @@ error() {
     exit 1
 }
 
-backup_and_link() {
+backup_and_copy() {
     local src="$1"
     local dest="$2"
 
@@ -28,8 +28,45 @@ backup_and_link() {
         mv "$dest" "$BACKUP_DIR/"
     fi
 
-    ln -sf "$src" "$dest"
-    info "Linked $dest"
+    cp -r "$src" "$dest"
+    info "Copied $dest"
+}
+
+# ============================================
+# FASTFETCH (config)
+# ============================================
+
+setup_fastfetch() {
+    info "=== Setting up Fastfetch ==="
+
+    mkdir -p "$HOME/.config/fastfetch"
+    backup_and_copy "$DOTFILES_DIR/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+
+    info "=== Fastfetch done ==="
+}
+
+# ============================================
+# ALACRITTY (themes + config)
+# ============================================
+
+setup_alacritty() {
+    info "=== Setting up Alacritty ==="
+
+    # Create config directory
+    mkdir -p "$HOME/.config/alacritty"
+
+    # Clone alacritty-theme if not exists
+    if [ ! -d "$HOME/.config/alacritty/themes" ]; then
+        info "Cloning alacritty-theme..."
+        git clone https://github.com/alacritty/alacritty-theme "$HOME/.config/alacritty/themes"
+    else
+        info "Alacritty themes already installed"
+    fi
+
+    # Link config
+    backup_and_copy "$DOTFILES_DIR/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+
+    info "=== Alacritty done ==="
 }
 
 # ============================================
@@ -56,8 +93,26 @@ setup_zsh() {
         info "Agnosterzak theme already installed"
     fi
 
+    # Install zsh-autosuggestions
+    local autosuggestions_dir="$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    if [ ! -d "$autosuggestions_dir" ]; then
+        info "Installing zsh-autosuggestions..."
+        git clone https://github.com/zsh-users/zsh-autosuggestions "$autosuggestions_dir"
+    else
+        info "zsh-autosuggestions already installed"
+    fi
+
+    # Install zsh-syntax-highlighting
+    local syntax_dir="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    if [ ! -d "$syntax_dir" ]; then
+        info "Installing zsh-syntax-highlighting..."
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting "$syntax_dir"
+    else
+        info "zsh-syntax-highlighting already installed"
+    fi
+
     # Link config
-    backup_and_link "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+    backup_and_copy "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 
     info "=== ZSH done ==="
 }
@@ -78,7 +133,7 @@ setup_tmux() {
     fi
 
     # Link config
-    backup_and_link "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
+    backup_and_copy "$DOTFILES_DIR/tmux/tmux.conf" "$HOME/.tmux.conf"
 
     info "=== TMUX done ==="
 }
@@ -106,7 +161,7 @@ setup_nvim() {
 
     # Link config
     mkdir -p "$HOME/.config"
-    backup_and_link "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
+    backup_and_copy "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
 
     info "=== NVIM done ==="
 }
@@ -119,11 +174,13 @@ usage() {
     echo "Usage: ./install.sh [command]"
     echo ""
     echo "Commands:"
-    echo "  all       Setup everything (default)"
-    echo "  zsh       Setup zsh (oh-my-zsh + theme + config)"
-    echo "  tmux      Setup tmux (tpm + config)"
-    echo "  nvim      Setup nvim (neovim + config)"
-    echo "  help      Show this message"
+    echo "  all        Setup everything (default)"
+    echo "  zsh        Setup zsh (oh-my-zsh + theme + plugins + config)"
+    echo "  tmux       Setup tmux (tpm + config)"
+    echo "  nvim       Setup nvim (neovim + config)"
+    echo "  alacritty  Setup alacritty (themes + config)"
+    echo "  fastfetch  Setup fastfetch (config)"
+    echo "  help       Show this message"
 }
 
 main() {
@@ -134,10 +191,14 @@ main() {
         setup_zsh
         setup_tmux
         setup_nvim
+        setup_alacritty
+        setup_fastfetch
         ;;
     zsh) setup_zsh ;;
     tmux) setup_tmux ;;
     nvim) setup_nvim ;;
+    alacritty) setup_alacritty ;;
+    fastfetch) setup_fastfetch ;;
     help | --help | -h)
         usage
         exit 0
