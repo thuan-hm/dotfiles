@@ -167,6 +167,44 @@ setup_nvim() {
 }
 
 # ============================================
+# CLAUDE CODE (notification hooks + script)
+# ============================================
+
+setup_claude() {
+    info "=== Setting up Claude Code ==="
+
+    # Install terminal-notifier for custom notification icons
+    if ! command -v terminal-notifier &>/dev/null; then
+        if command -v brew &>/dev/null; then
+            info "Installing terminal-notifier..."
+            brew install terminal-notifier
+        else
+            warn "Homebrew not found; skipping terminal-notifier (osascript fallback will be used)"
+        fi
+    else
+        info "terminal-notifier already installed"
+    fi
+
+    mkdir -p "$HOME/.claude"
+
+    # Notification script
+    cp "$DOTFILES_DIR/claude/notify.sh" "$HOME/.claude/notify.sh"
+    chmod +x "$HOME/.claude/notify.sh"
+    info "Installed notify.sh"
+
+    # Custom icon (optional)
+    if [ -f "$DOTFILES_DIR/claude/claude-icon.png" ]; then
+        cp "$DOTFILES_DIR/claude/claude-icon.png" "$HOME/.claude/claude-icon.png"
+        info "Installed claude-icon.png"
+    fi
+
+    # Settings with hooks
+    backup_and_copy "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+
+    info "=== Claude Code done ==="
+}
+
+# ============================================
 # MAIN
 # ============================================
 
@@ -180,6 +218,7 @@ usage() {
     echo "  nvim       Setup nvim (neovim + config)"
     echo "  alacritty  Setup alacritty (themes + config)"
     echo "  fastfetch  Setup fastfetch (config)"
+    echo "  claude     Setup Claude Code (notification hooks + script)"
     echo "  help       Show this message"
 }
 
@@ -193,12 +232,14 @@ main() {
         setup_nvim
         setup_alacritty
         setup_fastfetch
+        setup_claude
         ;;
     zsh) setup_zsh ;;
     tmux) setup_tmux ;;
     nvim) setup_nvim ;;
     alacritty) setup_alacritty ;;
     fastfetch) setup_fastfetch ;;
+    claude) setup_claude ;;
     help | --help | -h)
         usage
         exit 0

@@ -1,0 +1,38 @@
+{
+  "model": "claude-opus-4-8",
+  "enabledPlugins": {
+    "holistics-development@holistics-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "holistics-skills": {
+      "source": {
+        "source": "github",
+        "repo": "holistics/skills"
+      }
+    }
+  },
+  "effortLevel": "low",
+  "autoCompactEnabled": false,
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/notify.sh done"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/notify.sh input"
+          }
+        ]
+      }
+    ]
+  }
+}
