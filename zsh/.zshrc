@@ -34,3 +34,7 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# Claude Code: separate accounts via isolated config dirs
+alias claude-work='CLAUDE_CONFIG_DIR=$HOME/.claude-work claude'
+alias claude-personal='CLAUDE_CONFIG_DIR=$HOME/.claude-personal claude'
