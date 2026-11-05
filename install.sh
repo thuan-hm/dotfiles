@@ -111,6 +111,11 @@ setup_zsh() {
         info "zsh-syntax-highlighting already installed"
     fi
 
+    # lsd colors (Tokyo Night)
+    mkdir -p "$HOME/.config/lsd"
+    cp "$DOTFILES_DIR/lsd/config.yaml" "$DOTFILES_DIR/lsd/colors.yaml" "$HOME/.config/lsd/"
+    info "Installed lsd colors"
+
     # Link config
     backup_and_copy "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 

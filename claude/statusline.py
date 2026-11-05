@@ -39,15 +39,16 @@ ICON_CPU, ICON_RAM, ICON_DISK, ICON_BOLT = "\U000f04c5", "\U000f035b", "\uf0a0",
 ICON_BATT = ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"]  # empty .. full
 SEP_L, THIN_L = "\ue0b2", "\ue0b3"
 
-# word color matches the dark text of the tmux status-left segments
-TEXT = "#1d2021"
-MAGENTA, CYAN, GREEN, YELLOW, ORANGE, RED = "magenta", "cyan", "green", "yellow", "colour208", "red"
+# Tokyo Night; text is the terminal background, like the tmux status-left segments
+TEXT = "#1a1b26"
+LEFT_BG = "#292e42"  # background strip the tmux status-left gradient ends on
+PURPLE, GREEN, YELLOW, ORANGE, RED = "#bb9af7", "#9ece6a", "#e0af68", "#ff9e64", "#f7768e"
 MODEL_COLORS = {"haiku": YELLOW, "sonnet": ORANGE, "opus": RED}
 
 
 def model_color(model):
     ident = f"{model.get('id', '')} {model.get('display_name', '')}".lower()
-    return next((c for name, c in MODEL_COLORS.items() if name in ident), MAGENTA)
+    return next((c for name, c in MODEL_COLORS.items() if name in ident), PURPLE)
 
 
 def level_color(pct):
@@ -122,7 +123,7 @@ def build_segments(data):
     segs = [(0, f" {name if not effort else f'{name} · {effort}'} ", model_color(model), True)]
 
     parts = [p for p in cwd.split("/") if p]
-    segs.append((2, f" {parts[-1] if parts else '/'} ", CYAN, True))
+    segs.append((2, f" {parts[-1] if parts else '/'} ", PURPLE, True))
     git = git_info(cwd)
     if git:
         branch, dirty = git
@@ -157,8 +158,8 @@ def style(fg=None, bg=None, bold=None):
 
 def render(segs):
     """Join segments with powerline arrows in tmux #[...] style syntax."""
-    # arrow out of the host segment of tmux status-left (#3c3836 background)
-    line = style("#3c3836", segs[0][2]) + SEP
+    # arrow out of the host segment of tmux status-left (LEFT_BG background)
+    line = style(LEFT_BG, segs[0][2]) + SEP
     for i, (_, text, bg, bold) in enumerate(segs):
         line += style(TEXT, bg, bold) + text.replace("#", "##")
         nxt = segs[i + 1][2] if i + 1 < len(segs) else None

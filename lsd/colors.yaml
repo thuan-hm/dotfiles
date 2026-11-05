@@ -1,0 +1,41 @@
+# Tokyo Night, nearest xterm-256 numbers (lsd's theme has no RGB syntax).
+# File name colors come from LS_COLORS, set in .zshrc with exact RGB.
+# 111 blue, 117 cyan, 115 teal, 114 green, 179 yellow, 215 orange, 204 red, 141 purple, 60 gray
+user: 111
+group: 117
+permission:
+  read: 114
+  write: 179
+  exec: 204
+  exec-sticky: 141
+  no-access: 60
+  octal: 115
+  acl: 115
+  context: 117
+date:
+  hour-old: 115
+  day-old: 117
+  older: 111
+size:
+  none: 60
+  small: 114
+  medium: 179
+  large: 215
+inode:
+  valid: 141
+  invalid: 60
+links:
+  valid: 179
+  invalid: 204
+tree-edge: 60
+git-status:
+  default: 146
+  unmodified: 60
+  ignored: 60
+  new-in-index: 114
+  new-in-workdir: 114
+  typechange: 179
+  deleted: 204
+  renamed: 115
+  modified: 179
+  conflicted: 204
