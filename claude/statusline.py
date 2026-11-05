@@ -52,13 +52,12 @@ def model_color(model):
     return next((c for name, c in MODEL_COLORS.items() if name in ident), PURPLE)
 
 
-# usage scale (percent, color): cool when low, hot when high, blended in between
+# usage scale (percent, color): green when low, red when high, blended in between
 LEVEL_STOPS = [
-    (0, "#7dcfff"),   # cyan
-    (20, "#73daca"),  # teal
-    (40, "#9ece6a"),  # green
-    (55, "#e0af68"),  # yellow
-    (70, "#ff9e64"),  # orange
+    (0, "#9ece6a"),   # green
+    (25, "#b5c565"),  # yellow-green
+    (45, "#e0af68"),  # yellow
+    (65, "#ff9e64"),  # orange
     (85, "#f7768e"),  # red
     (100, "#db4b4b"), # deep red
 ]
