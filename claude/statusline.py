@@ -52,15 +52,27 @@ def model_color(model):
     return next((c for name, c in MODEL_COLORS.items() if name in ident), PURPLE)
 
 
+# usage scale (percent, color): cool when low, hot when high, blended in between
+LEVEL_STOPS = [
+    (0, "#7dcfff"),   # cyan
+    (20, "#73daca"),  # teal
+    (40, "#9ece6a"),  # green
+    (55, "#e0af68"),  # yellow
+    (70, "#ff9e64"),  # orange
+    (85, "#f7768e"),  # red
+    (100, "#db4b4b"), # deep red
+]
+
+
 def level_color(pct):
-    """green -> yellow -> orange -> red as usage grows."""
-    if pct < 50:
-        return GREEN
-    if pct < 75:
-        return YELLOW
-    if pct < 90:
-        return ORANGE
-    return RED
+    """Blend between the stops above so the color tracks usage smoothly."""
+    pct = max(0.0, min(100.0, pct))
+    for (lo, a), (hi, b) in zip(LEVEL_STOPS, LEVEL_STOPS[1:]):
+        if pct <= hi:
+            t = (pct - lo) / (hi - lo)
+            rgb = [round(int(a[k:k + 2], 16) + t * (int(b[k:k + 2], 16) - int(a[k:k + 2], 16))) for k in (1, 3, 5)]
+            return "#%02x%02x%02x" % tuple(rgb)
+    return LEVEL_STOPS[-1][1]
 
 
 def bar(pct):
