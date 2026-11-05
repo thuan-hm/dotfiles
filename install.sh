@@ -93,6 +93,11 @@ setup_zsh() {
         info "Agnosterzak theme already installed"
     fi
 
+    # Gradient overlay on top of agnosterzak (matches the tmux status bar)
+    mkdir -p "$HOME/.oh-my-zsh/custom/themes"
+    cp "$DOTFILES_DIR/zsh/agnosterzak-custom.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/agnosterzak-custom.zsh-theme"
+    info "Installed agnosterzak-custom theme"
+
     # Install zsh-autosuggestions
     local autosuggestions_dir="$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
     if [ ! -d "$autosuggestions_dir" ]; then
