@@ -34,5 +34,10 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/statusline.py --quiet",
+    "refreshInterval": 30
   }
 }
