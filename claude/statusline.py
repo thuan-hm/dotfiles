@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from datetime import datetime
 
 SEP = ""
 THIN = ""
@@ -67,12 +68,11 @@ def bar(pct):
     return FILLED * filled + EMPTY * (BAR_WIDTH - filled)
 
 
-def fmt_remaining(resets_at):
-    secs = int(resets_at - time.time())
-    if secs <= 0:
-        return "now"
-    h, m = divmod(secs // 60, 60)
-    return f"{h}h{m:02d}m" if h else f"{m}m"
+def fmt_reset(resets_at):
+    """Local wall-clock time of the reset: 18:30 today, or 'Mon 09:00' on another day."""
+    when = datetime.fromtimestamp(resets_at)
+    same_day = when.date() == datetime.now().date()
+    return when.strftime("%H:%M" if same_day else "%a %H:%M")
 
 
 def git_info(cwd):
@@ -117,7 +117,7 @@ def build_segments(data):
     model = data.get("model") or {}
     effort = (data.get("effort") or {}).get("level") or os.environ.get("CLAUDE_EFFORT")
     ctx = (data.get("context_window") or {}).get("used_percentage")
-    five = (data.get("rate_limits") or {}).get("five_hour") or {}
+    limits = data.get("rate_limits") or {}
 
     name = model.get("display_name") or "claude"
     segs = [(0, f" {name if not effort else f'{name} · {effort}'} ", model_color(model), True)]
@@ -132,10 +132,13 @@ def build_segments(data):
     if ctx is not None:
         segs.append((1, f" context {bar(ctx)} {ctx:.0f}% ", level_color(ctx), False))
 
-    if five.get("used_percentage") is not None:
-        p = five["used_percentage"]
-        reset = f" ↻{fmt_remaining(five['resets_at'])}" if five.get("resets_at") else ""
-        segs.append((3, f" 5h {bar(p)} {p:.0f}%{reset} ", level_color(p), False))
+    for priority, key, label in ((3, "five_hour", "5h"), (4, "seven_day", "7d")):
+        window = limits.get(key) or {}
+        p = window.get("used_percentage")
+        if p is None:
+            continue
+        reset = f" ↻ {fmt_reset(window['resets_at'])}" if window.get("resets_at") else ""
+        segs.append((priority, f" {label} {bar(p)} {p:.0f}%{reset} ", level_color(p), False))
     return segs
 
 
