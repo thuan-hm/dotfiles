@@ -1,7 +1,6 @@
 
 source "$ZSH/themes/agnosterzak.zsh-theme"
 
-# Tokyo Night gradient (same hex as tmux status-left) with dark text
 _GRAD_TEXT="#1a1b26"
 _GRAD_1="#7aa2f7"  # time
 _GRAD_2="#7dcfff"  # dir
