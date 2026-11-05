@@ -192,6 +192,11 @@ setup_claude() {
     chmod +x "$HOME/.claude/notify.sh"
     info "Installed notify.sh"
 
+    # Status line script
+    cp "$DOTFILES_DIR/claude/statusline.py" "$HOME/.claude/statusline.py"
+    chmod +x "$HOME/.claude/statusline.py"
+    info "Installed statusline.py"
+
     # Custom icon (optional)
     if [ -f "$DOTFILES_DIR/claude/claude-icon.png" ]; then
         cp "$DOTFILES_DIR/claude/claude-icon.png" "$HOME/.claude/claude-icon.png"
