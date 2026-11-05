@@ -1,6 +1,4 @@
-# agnosterzak with the Tokyo Night gradient used by the tmux status bar.
-# Sources the upstream theme and only overrides the segment colors, so
-# re-downloading the upstream file doesn't lose the customization.
+
 source "$ZSH/themes/agnosterzak.zsh-theme"
 
 # Tokyo Night gradient (same hex as tmux status-left) with dark text
@@ -9,8 +7,6 @@ _GRAD_1="#7aa2f7"  # time
 _GRAD_2="#7dcfff"  # dir
 _GRAD_3="#73daca"  # user / host
 
-# Dark, regular-weight text everywhere (git segment included). The upstream theme
-# asks for bold white/magenta/black on its colored segments, so remap those.
 _dark=$'\e[22;38;2;26;27;38m'
 for _c in white magenta black; do
   fg_bold[$_c]=$_dark
