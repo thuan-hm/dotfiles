@@ -14,22 +14,19 @@ Two modes:
 
 Segments are dropped (lowest priority first) when there isn't enough width.
 """
-import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
+from datetime import datetime
 
 SEP = ""
 THIN = ""
-BRANCH = ""
 FILLED, EMPTY = "▰", "▱"
 BAR_WIDTH = 6
-GIT_TTL = 5  # seconds
 STALE_AFTER = 120  # seconds before a pane's saved payload is ignored by tmux
 SYS_TTL = 5  # seconds
 CACHE_DIR = os.path.expanduser("~/.cache/claude-statusline")
@@ -51,15 +48,26 @@ def model_color(model):
     return next((c for name, c in MODEL_COLORS.items() if name in ident), PURPLE)
 
 
+# usage scale (percent, color): green when low, red when high, blended in between
+LEVEL_STOPS = [
+    (0, "#9ece6a"),   # green
+    (25, "#b5c565"),  # yellow-green
+    (45, "#e0af68"),  # yellow
+    (65, "#ff9e64"),  # orange
+    (85, "#f7768e"),  # red
+    (100, "#db4b4b"), # deep red
+]
+
+
 def level_color(pct):
-    """green -> yellow -> orange -> red as usage grows."""
-    if pct < 50:
-        return GREEN
-    if pct < 75:
-        return YELLOW
-    if pct < 90:
-        return ORANGE
-    return RED
+    """Blend between the stops above so the color tracks usage smoothly."""
+    pct = max(0.0, min(100.0, pct))
+    for (lo, a), (hi, b) in zip(LEVEL_STOPS, LEVEL_STOPS[1:]):
+        if pct <= hi:
+            t = (pct - lo) / (hi - lo)
+            rgb = [round(int(a[k:k + 2], 16) + t * (int(b[k:k + 2], 16) - int(a[k:k + 2], 16))) for k in (1, 3, 5)]
+            return "#%02x%02x%02x" % tuple(rgb)
+    return LEVEL_STOPS[-1][1]
 
 
 def bar(pct):
@@ -67,48 +75,11 @@ def bar(pct):
     return FILLED * filled + EMPTY * (BAR_WIDTH - filled)
 
 
-def fmt_remaining(resets_at):
-    secs = int(resets_at - time.time())
-    if secs <= 0:
-        return "now"
-    h, m = divmod(secs // 60, 60)
-    return f"{h}h{m:02d}m" if h else f"{m}m"
-
-
-def git_info(cwd):
-    """Return (branch, dirty) or None; cached briefly because tmux re-renders often."""
-    cache = os.path.join(
-        tempfile.gettempdir(),
-        f"cc-statusline-git-{hashlib.md5(cwd.encode()).hexdigest()[:10]}.json",
-    )
-    try:
-        if time.time() - os.path.getmtime(cache) < GIT_TTL:
-            with open(cache) as f:
-                cached = json.load(f)
-            return tuple(cached) if cached else None
-    except (OSError, ValueError):
-        pass
-    result = None
-    try:
-        out = subprocess.run(
-            ["git", "-C", cwd, "--no-optional-locks", "status", "--porcelain", "-b"],
-            capture_output=True, text=True, timeout=2,
-        )
-        if out.returncode == 0:
-            lines = out.stdout.splitlines()
-            head = lines[0][3:] if lines else ""
-            name = head.split("...")[0].split(" ")[0]
-            if name.startswith("No commits yet on "):
-                name = name.rsplit(" ", 1)[-1]
-            result = (name, len(lines) > 1)
-    except (OSError, subprocess.SubprocessError):
-        pass
-    try:
-        with open(cache, "w") as f:
-            json.dump(result, f)
-    except OSError:
-        pass
-    return result
+def fmt_reset(resets_at):
+    """Local wall-clock time of the reset: 18:30 today, or 'Mon 09:00' on another day."""
+    when = datetime.fromtimestamp(resets_at)
+    same_day = when.date() == datetime.now().date()
+    return when.strftime("%H:%M" if same_day else "%a %H:%M")
 
 
 def build_segments(data):
@@ -117,25 +88,24 @@ def build_segments(data):
     model = data.get("model") or {}
     effort = (data.get("effort") or {}).get("level") or os.environ.get("CLAUDE_EFFORT")
     ctx = (data.get("context_window") or {}).get("used_percentage")
-    five = (data.get("rate_limits") or {}).get("five_hour") or {}
+    limits = data.get("rate_limits") or {}
 
     name = model.get("display_name") or "claude"
     segs = [(0, f" {name if not effort else f'{name} · {effort}'} ", model_color(model), True)]
 
     parts = [p for p in cwd.split("/") if p]
     segs.append((2, f" {parts[-1] if parts else '/'} ", PURPLE, True))
-    git = git_info(cwd)
-    if git:
-        branch, dirty = git
-        segs.append((2, f" {BRANCH} {branch}{' ±' if dirty else ''} ", YELLOW if dirty else GREEN, False))
 
     if ctx is not None:
         segs.append((1, f" context {bar(ctx)} {ctx:.0f}% ", level_color(ctx), False))
 
-    if five.get("used_percentage") is not None:
-        p = five["used_percentage"]
-        reset = f" ↻{fmt_remaining(five['resets_at'])}" if five.get("resets_at") else ""
-        segs.append((3, f" 5h {bar(p)} {p:.0f}%{reset} ", level_color(p), False))
+    for priority, key, label in ((3, "five_hour", "5h"), (4, "seven_day", "7d")):
+        window = limits.get(key) or {}
+        p = window.get("used_percentage")
+        if p is None:
+            continue
+        reset = f" ↻ {fmt_reset(window['resets_at'])}" if window.get("resets_at") else ""
+        segs.append((priority, f" {label} {bar(p)} {p:.0f}%{reset} ", level_color(p), False))
     return segs
 
 
